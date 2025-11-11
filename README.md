@@ -9,7 +9,7 @@ A Dart package providing FFI (Foreign Function Interface) bindings to IndexerLib
 - **Proximity Matching**: Find terms within a specified word distance (adjacency)
 - **Document Management**: Map document IDs to file paths
 - **Snippet Generation**: Extract highlighted text snippets around matching terms
-- **Cross-Platform**: Supports Windows, Linux, and macOS through Native AOT compilation
+- **Cross-Platform**: Supports Windows (tested), Linux, and macOS through Native AOT compilation
 - **High Performance**: Built with Native AOT for optimal speed and minimal memory footprint
 
 ## Requirements
@@ -17,6 +17,8 @@ A Dart package providing FFI (Foreign Function Interface) bindings to IndexerLib
 - **Dart SDK**: ^3.9.2
 - **.NET SDK**: 8.0 or higher (for building the C# library)
 - **Platform**: Windows (tested), Linux, or macOS
+
+Android is currently not supported for the C# NativeAOT bridge.
 
 ## Building the Library
 
@@ -33,9 +35,12 @@ chmod +x build.sh
 ./build.sh
 ```
 
-The build script will:
-1. Compile the IndexerLib sources with the FFI wrapper using Native AOT
-2. Output the library to `csharp_lib/bin/Release/net8.0/{platform}/publish/`
+The build scripts will:
+1. Compile the included IndexerLib sources with the FFI wrapper using Native AOT
+2. Output the library to `csharp_lib/bin/Release/net8.0/{rid}/publish/` where `rid` is one of:
+  - `win-x64`
+  - `linux-x64`
+  - `osx-x64` or `osx-arm64`
 
 ## Getting Started
 
@@ -185,7 +190,9 @@ IndexerLib Dart Wrapper (lib/src/indexer_lib_base.dart)
       ↓ (P/Invoke)
 C# Wrapper (csharp_lib/IndexerLibWrapper.cs)
       ↓
-Original IndexerLib (../Indexer/IndexerLib/)
+IndexerLib sources (included in `csharp_lib/IndexerLib/**`)
+
+All string interop uses UTF-8. Non-ASCII (e.g., Hebrew) paths and snippets are supported end-to-end.
 ```
 
 The Native AOT compilation produces a self-contained native library with no .NET runtime dependencies, making it fast and efficient.
@@ -211,8 +218,11 @@ Ensure an index has been created before searching. The index is stored in the C:
 ### Build errors
 Ensure you have:
 - .NET SDK 8.0 or higher installed
-- Built the original IndexerLib first
 - All NuGet packages restored
+
+On Linux/macOS, ensure you build on the target OS (cross-compiling from Windows is not supported by NativeAOT toolchain out of the box).
+
+Android is not supported with this C# bridge. Consider an alternative native backend (C/C++/Rust) for Android, or .NET for Android NativeAOT with appropriate workloads and tooling.
 
 ## License
 

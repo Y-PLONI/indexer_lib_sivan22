@@ -12,20 +12,20 @@ base class SearchResultItem extends Struct {
 }
 
 // Type definitions for the C# functions
-typedef CreateIndexNative = Int32 Function(Pointer<Char> directory, Pointer<Char> extensions, Int32 memoryUsage);
-typedef CreateIndexDart = int Function(Pointer<Char> directory, Pointer<Char> extensions, int memoryUsage);
+typedef CreateIndexNative = Int32 Function(Pointer<Utf8> directory, Pointer<Utf8> extensions, Int32 memoryUsage);
+typedef CreateIndexDart = int Function(Pointer<Utf8> directory, Pointer<Utf8> extensions, int memoryUsage);
 
-typedef SearchNative = Int32 Function(Pointer<Char> query, Int16 adjacency, Pointer<SearchResultItem> resultsBuffer, Int32 maxResults);
-typedef SearchDart = int Function(Pointer<Char> query, int adjacency, Pointer<SearchResultItem> resultsBuffer, int maxResults);
+typedef SearchNative = Int32 Function(Pointer<Utf8> query, Int16 adjacency, Pointer<SearchResultItem> resultsBuffer, Int32 maxResults);
+typedef SearchDart = int Function(Pointer<Utf8> query, int adjacency, Pointer<SearchResultItem> resultsBuffer, int maxResults);
 
-typedef GetDocPathNative = Pointer<Char> Function(Int32 docId);
-typedef GetDocPathDart = Pointer<Char> Function(int docId);
+typedef GetDocPathNative = Pointer<Utf8> Function(Int32 docId);
+typedef GetDocPathDart = Pointer<Utf8> Function(int docId);
 
-typedef GetSnippetNative = Pointer<Char> Function(Int32 docId, Pointer<Char> query);
-typedef GetSnippetDart = Pointer<Char> Function(int docId, Pointer<Char> query);
+typedef GetSnippetNative = Pointer<Utf8> Function(Int32 docId, Pointer<Utf8> query);
+typedef GetSnippetDart = Pointer<Utf8> Function(int docId, Pointer<Utf8> query);
 
-typedef FreeStringNative = Void Function(Pointer<Char> ptr);
-typedef FreeStringDart = void Function(Pointer<Char> ptr);
+typedef FreeStringNative = Void Function(Pointer<Utf8> ptr);
+typedef FreeStringDart = void Function(Pointer<Utf8> ptr);
 
 /// Wrapper class for IndexerLib FFI bindings
 class IndexerLib {
@@ -41,9 +41,28 @@ class IndexerLib {
     if (Platform.isWindows) {
       _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/win-x64/publish/IndexerLibWrapper.dll');
     } else if (Platform.isLinux) {
-      _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/linux-x64/publish/IndexerLibWrapper.so');
+      try {
+        _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/linux-x64/publish/IndexerLibWrapper.so');
+      } catch (_) {
+        _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/linux-x64/publish/libIndexerLibWrapper.so');
+      }
     } else if (Platform.isMacOS) {
-      _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/osx-x64/publish/IndexerLibWrapper.dylib');
+      // Try arm64 first (Apple Silicon), then x64 (Intel)
+      try {
+        try {
+          _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/osx-arm64/publish/IndexerLibWrapper.dylib');
+        } catch (_) {
+          _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/osx-arm64/publish/libIndexerLibWrapper.dylib');
+        }
+      } catch (_) {
+        try {
+          _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/osx-x64/publish/IndexerLibWrapper.dylib');
+        } catch (_) {
+          _lib = DynamicLibrary.open('csharp_lib/bin/Release/net8.0/osx-x64/publish/libIndexerLibWrapper.dylib');
+        }
+      }
+    } else if (Platform.isAndroid) {
+      throw UnsupportedError('Android is not supported yet for IndexerLib');
     } else {
       throw UnsupportedError('Platform not supported');
     }
@@ -68,7 +87,7 @@ class IndexerLib {
     final extensionsPtr = extensions.toNativeUtf8();
     
     try {
-      return _createIndex(directoryPtr.cast(), extensionsPtr.cast(), memoryUsage);
+      return _createIndex(directoryPtr, extensionsPtr, memoryUsage);
     } finally {
       malloc.free(directoryPtr);
       malloc.free(extensionsPtr);
@@ -83,11 +102,11 @@ class IndexerLib {
   /// 
   /// Returns a list of search results
   List<SearchResult> search(String query, {int adjacency = 2, int maxResults = 100}) {
-    final queryPtr = query.toNativeUtf8();
-    final resultsBuffer = malloc<SearchResultItem>(maxResults);
+  final queryPtr = query.toNativeUtf8();
+  final resultsBuffer = malloc<SearchResultItem>(maxResults);
     
     try {
-      final resultCount = _search(queryPtr.cast(), adjacency, resultsBuffer, maxResults);
+  final resultCount = _search(queryPtr, adjacency, resultsBuffer, maxResults);
       
       if (resultCount < 0) {
         throw Exception('Search failed');
@@ -99,7 +118,7 @@ class IndexerLib {
       
       final results = <SearchResult>[];
       for (int i = 0; i < resultCount; i++) {
-        final item = resultsBuffer.elementAt(i).ref;
+        final item = (resultsBuffer + i).ref;
         results.add(SearchResult(
           docId: item.docId,
           matchCount: item.matchCount,
@@ -119,14 +138,14 @@ class IndexerLib {
   /// 
   /// Returns the file path or null if not found
   String? getDocPath(int docId) {
-    final ptr = _getDocPath(docId);
+  final ptr = _getDocPath(docId);
     
     if (ptr == nullptr) {
       return null;
     }
     
     try {
-      return ptr.cast<Utf8>().toDartString();
+      return ptr.toDartString();
     } finally {
       _freeString(ptr);
     }
@@ -139,17 +158,17 @@ class IndexerLib {
   /// 
   /// Returns a snippet or null if not found
   String? getSnippet(int docId, String query) {
-    final queryPtr = query.toNativeUtf8();
+  final queryPtr = query.toNativeUtf8();
     
     try {
-      final ptr = _getSnippet(docId, queryPtr.cast());
+  final ptr = _getSnippet(docId, queryPtr);
       
       if (ptr == nullptr) {
         return null;
       }
       
       try {
-        return ptr.cast<Utf8>().toDartString();
+        return ptr.toDartString();
       } finally {
         _freeString(ptr);
       }

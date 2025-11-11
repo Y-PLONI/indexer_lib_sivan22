@@ -1,0 +1,7 @@
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\IndexerLibWrapper.dll
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\IndexerLibWrapper.dll.config
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\IndexerLibWrapper.pdb
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\LICENSE
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\pdfium.dll
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\sni.dll
+C:\otzaria_project\indexer_lib_sivan22\csharp_lib\bin\Release\net8.0\win-x64\publish\SQLite.Interop.dll

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -33,8 +34,36 @@ namespace IndexerLib.Index
 
         static double GetAvailableMemoryMB()
         {
-            using (var pc = new PerformanceCounter("Memory", "Available MBytes"))
-                return pc.NextValue();
+            try
+            {
+                if (OperatingSystem.IsWindows())
+                {
+                    using (var pc = new PerformanceCounter("Memory", "Available MBytes"))
+                        return pc.NextValue();
+                }
+
+                if (OperatingSystem.IsLinux())
+                {
+                    // Read MemAvailable from /proc/meminfo (in kB)
+                    var line = File.ReadLines("/proc/meminfo").FirstOrDefault(l => l.StartsWith("MemAvailable:"));
+                    if (line != null)
+                    {
+                        var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length >= 2 && double.TryParse(parts[1], out var kb))
+                        {
+                            return kb / 1024.0; // to MB
+                        }
+                    }
+                }
+
+                // macOS and fallback: use GC available memory as heuristic
+                var info = GC.GetGCMemoryInfo();
+                if (info.TotalAvailableMemoryBytes > 0)
+                    return info.TotalAvailableMemoryBytes / (1024.0 * 1024.0);
+            }
+            catch { }
+
+            return 1024; // fallback to 1GB
         }
 
         public void Log(string key, Token token)

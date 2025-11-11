@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IndexerLibWrapper")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+81622aec49aa166dd72a88fa1dd514316e61295d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+af27da0b5f503f0186729ada346a43a4f78e34d5")]
 [assembly: System.Reflection.AssemblyProductAttribute("IndexerLibWrapper")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IndexerLibWrapper")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

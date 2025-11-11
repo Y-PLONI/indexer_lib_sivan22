@@ -24,8 +24,8 @@ namespace IndexerLibWrapper
                 if (directoryPtr == null || extensionsPtr == null)
                     return -1;
 
-                string directory = Marshal.PtrToStringAnsi((IntPtr)directoryPtr);
-                string extensionsStr = Marshal.PtrToStringAnsi((IntPtr)extensionsPtr);
+                string directory = Marshal.PtrToStringUTF8((IntPtr)directoryPtr);
+                string extensionsStr = Marshal.PtrToStringUTF8((IntPtr)extensionsPtr);
                 
                 if (string.IsNullOrEmpty(directory) || string.IsNullOrEmpty(extensionsStr))
                     return -1;
@@ -53,7 +53,7 @@ namespace IndexerLibWrapper
                 if (queryPtr == null)
                     return -1;
 
-                string query = Marshal.PtrToStringAnsi((IntPtr)queryPtr);
+                string query = Marshal.PtrToStringUTF8((IntPtr)queryPtr);
                 if (string.IsNullOrEmpty(query))
                     return -1;
 
@@ -98,8 +98,8 @@ namespace IndexerLibWrapper
                     var path = docIdStore.GetPathById(docId);
                     if (string.IsNullOrEmpty(path))
                         return null;
-                    
-                    return (byte*)Marshal.StringToHGlobalAnsi(path);
+
+                    return (byte*)Marshal.StringToCoTaskMemUTF8(path);
                 }
             }
             catch (Exception ex)
@@ -114,7 +114,7 @@ namespace IndexerLibWrapper
         {
             if (ptr != null)
             {
-                Marshal.FreeHGlobal((IntPtr)ptr);
+                Marshal.FreeCoTaskMem((IntPtr)ptr);
             }
         }
 
@@ -126,7 +126,7 @@ namespace IndexerLibWrapper
                 if (queryPtr == null)
                     return null;
 
-                string query = Marshal.PtrToStringAnsi((IntPtr)queryPtr);
+                string query = Marshal.PtrToStringUTF8((IntPtr)queryPtr);
                 if (string.IsNullOrEmpty(query))
                     return null;
 
@@ -146,7 +146,7 @@ namespace IndexerLibWrapper
 
                     // Return the first snippet
                     var snippet = searchResult.Snippets[0];
-                    return (byte*)Marshal.StringToHGlobalAnsi(snippet);
+                    return (byte*)Marshal.StringToCoTaskMemUTF8(snippet);
                 }
             }
             catch (Exception ex)
